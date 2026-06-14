@@ -1,21 +1,22 @@
+import { PostRepository } from "../05-dip/post-service";
 
-/**
- * DATA PROVIDER ACUPLADO
- */
+export class LocalDatabaseService implements PostRepository {
 
-export class LocalDatabaseService {
-    async getFakePosts() {
+    async getPosts(): Promise<any[]> {
+        console.log("Obteniendo publicaciones desde LocalDatabaseService...");
+
         return [
-            { id: 1, title: 'Avistamiento de Jaguar', body: 'Se reportó un jaguar cerca del río.' },
-            { id: 2, title: 'Nuevas Orquídeas', body: 'Han florecido las especies raras en el jardín botánico.' }
+            {
+                id: 1,
+                title: "Registro de especies de la reserva",
+                body: "Publicación almacenada en la base de datos local."
+            },
+            {
+                id: 2,
+                title: "Reporte de monitoreo ambiental",
+                body: "Información obtenida desde el proveedor local."
+            }
         ];
     }
-}
 
-export class JsonDatabaseService {
-    async getFakePosts() {
-        return [
-            { id: 1, title: 'JSON Post 1', body: 'Contenido desde JSON' }
-        ];
-    }
 }
