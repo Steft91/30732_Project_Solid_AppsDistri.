@@ -1,39 +1,57 @@
-
 /**
- * VIOLACIÓN AL PRINCIPIO DE SEGREGACIÓN DE INTERFAZ (ISP)
- * 
- * El catálogo de fauna define una interfaz "gorda" que obliga a las aves 
- * a implementar métodos que no les corresponden según su naturaleza.
+ * APLICACIÓN DEL PRINCIPIO DE SEGREGACIÓN DE INTERFAZ (ISP)
+ *
+ * Se reemplaza la interfaz general Bird por interfaces pequeñas
+ * y específicas según las capacidades de cada ave.
+ *
+ * Ahora ninguna clase está obligada a implementar métodos
+ * que no corresponden a su comportamiento real.
  */
 
-interface Bird {
+export interface Eatable {
     eat(): void;
+}
+
+export interface Flyable {
     fly(): void;
+}
+
+export interface Swimmable {
     swim(): void;
 }
 
-export class Toucan implements Bird {
-    public eat() { console.log('El Tucán está comiendo frutas.'); }
-    public fly() { console.log('El Tucán vuela sobre la selva.'); }
-    public swim() { console.log('El Tucán no suele nadar, pero implemento el método vacío.'); }
-}
+export class Toucan implements Eatable, Flyable {
 
-export class Hummingbird implements Bird {
-    public eat() { console.log('El Colibrí busca néctar.'); }
-    public fly() { console.log('El Colibrí aletea rápidamente.'); }
-    public swim() { throw new Error('Un colibrí no puede nadar'); }
-}
-
-/**
- * VIOLACIÓN FLAGRANTE: El Avestruz es un ave, pero NO VUELA.
- * La interfaz Bird le obliga a implementar fly(), causando una excepción en tiempo de ejecución
- * o un comportamiento inesperado.
- */
-export class Ostrich implements Bird {
-    public eat() { console.log('El Avestruz come hierbas.'); }
-    public fly() { 
-        // ¡Error! Violación de ISP.
-        throw new Error('Las avestruces NO vuelan.'); 
+    public eat(): void {
+        console.log('El Tucán está comiendo frutas.');
     }
-    public swim() { console.log('El Avestruz puede nadar si es necesario.'); }
+
+    public fly(): void {
+        console.log('El Tucán vuela sobre la selva.');
+    }
+
+}
+
+export class Hummingbird implements Eatable, Flyable {
+
+    public eat(): void {
+        console.log('El Colibrí busca néctar.');
+    }
+
+    public fly(): void {
+        console.log('El Colibrí aletea rápidamente.');
+    }
+
+}
+
+export class Ostrich implements Eatable, Swimmable {
+
+    public eat(): void {
+        console.log('El Avestruz come hierbas.');
+    }
+
+    public swim(): void {
+        console.log('El Avestruz puede nadar si es necesario.');
+    }
+
 }
