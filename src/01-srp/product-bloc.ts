@@ -1,6 +1,6 @@
 
 /**
- * APLICACIÓN PARCIAL DEL PRINCIPIO DE RESPONSABILIDAD ÚNICA (SRP)
+ * APLICACIÓN  DEL PRINCIPIO DE RESPONSABILIDAD ÚNICA (SRP)
  *
  * ProductBloc ya no guarda productos directamente ni envía correos directamente.
  * Ahora delega la persistencia a ProductService y las notificaciones a Mailer.
@@ -11,8 +11,10 @@ import { Mailer } from './mailer';
 
 export class ProductBloc {
 
-    private productService = new ProductService;
-    private mailer = new Mailer;
+    constructor(
+        private productService: ProductService,
+        private mailer: Mailer
+    ){}
 
     loadProduct(id: number): Product | undefined {
         return this.productService.loadProduct(id);
