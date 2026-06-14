@@ -1,39 +1,71 @@
-
 /**
- * VIOLACIÓN AL PRINCIPIO DE RESPONSABILIDAD ÚNICA (SRP)
- * 
- * Este archivo muestra una clase "Dios" o un componente que hace demasiadas cosas.
- * En el contexto de la Reserva Ecológica, el ProductBloc gestiona el inventario de la tienda
- * de souvenirs y, al mismo tiempo, se encarga de las notificaciones por correo.
+ * ProductBloc
+ *
+ * Responsabilidad:
+ * Coordinar el flujo de registro de productos.
+ *
+ * No persiste directamente productos.
+ * No envía correos directamente.
+ * No borra productos guardados si falla la notificación.
  */
 
-interface Product {
-    id: number;
-    name: string;
-}
+import { Product, ProductService } from "./product-service";
+import { Mailer } from "./mailer";
+import { NotificationOutbox } from "./notification-outbox";
 
 export class ProductBloc {
 
-    private products: Product[] = [];
+    constructor(
+        private productService: ProductService,
+        private mailer: Mailer,
+        private notificationOutbox: NotificationOutbox
+    ) {}
 
-    // Responsabilidad 1: Carga de productos (Lógica de Negocio/Persistencia)
-    loadProduct(id: number) {
-        console.log(`Cargando producto con ID: ${id} desde el inventario del parque...`);
-        // Simulación de carga
-        return this.products.find(p => p.id === id);
+    loadProduct(id: number): Product | undefined {
+        return this.productService.loadProduct(id);
     }
 
-    // Responsabilidad 2: Guardado de productos (Lógica de Persistencia)
-    saveProduct(product: Product) {
-        console.log(`Guardando el producto ${product.name} en la base de datos de la reserva...`);
-        this.products.push(product);
+    saveProduct(product: Product): void {
+        this.productService.saveProduct(product);
     }
 
-    // Responsabilidad 3: Envío de notificaciones (Servicio de Infraestructura)
-    // ESTA ES LA VIOLACIÓN: El Bloc no debería saber CÓMO enviar correos electrónicos.
-    notifyCustomer(email: string, message: string) {
-        console.log(`[Mailer] Enviando correo a ${email}: ${message}`);
-        // Lógica directa de envío de correo acoplada aquí
+    notifyCustomer(email: string, message: string): void {
+        this.mailer.sendEmail(email, message);
+    }
+
+    registerProduct(product: Product, customerEmail: string): void {
+        console.log('--- Iniciando registro transaccional de producto ---');
+
+        if (this.productService.productExists(product.id)) {
+            console.error(`No se puede registrar. El producto con ID ${product.id} ya existe.`);
+            return;
+        }
+
+        try {
+            this.productService.saveProduct(product);
+            console.log('Producto guardado correctamente.');
+        } catch (error) {
+            console.error('Error de persistencia. El producto no fue guardado:', error);
+            return;
+        }
+
+        const message = `El producto ${product.name} fue registrado correctamente en la reserva.`;
+
+        const pendingNotification = this.notificationOutbox.addPendingNotification(
+            customerEmail,
+            message
+        );
+
+        try {
+            this.mailer.sendEmail(customerEmail, message);
+            this.notificationOutbox.markAsSent(pendingNotification.id);
+            console.log('Correo enviado correctamente.');
+        } catch (error) {
+            console.error('Error de notificación. El producto se mantiene guardado:', error);
+            console.warn('La notificación queda pendiente para reintento.');
+        }
+
+        console.log('--- Fin del registro transaccional de producto ---');
     }
 
 }
