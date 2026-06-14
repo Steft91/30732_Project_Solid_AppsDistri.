@@ -1,32 +1,58 @@
-
 /**
- * VIOLACIÓN AL PRINCIPIO DE ABIERTO/CERRADO (OCP)
- * 
- * En este módulo de noticias de la reserva, el servicio depende directamente
- * de la librería externa 'axios'. Si quisiéramos usar 'fetch' u otra librería,
- * tendríamos que modificar este código interno.
+ * APLICACIÓN DEL PRINCIPIO ABIERTO/CERRADO (OCP)
+ *
+ * Los servicios ya no dependen directamente de axios.
+ * Ahora dependen de una abstracción HttpClient.
+ *
+ * Si después se quiere usar axios, fetch u otra librería,
+ * solo se crea una nueva clase que implemente HttpClient,
+ * sin modificar NewsService ni PhotosService.
  */
 
-import axios from 'axios';
+//import axios from 'axios';
+
+export interface HttpClient {
+    get<T>(url: string): Promise<T>;
+}
+
+export class FetchHttpClient implements HttpClient {
+
+    async get<T>(url: string): Promise<T> {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        return response.json() as Promise<T>;
+    }
+
+}
 
 export class NewsService {
 
-    // VIOLACIÓN: Dependencia rígida de axios.get()
-    // Si la API cambia o queremos cambiar de cliente HTTP, este código debe "abrirse" para modificación.
+    constructor(private httpClient: HttpClient) {}
+
     async getLatestNews() {
         console.log('Obteniendo noticias de la reserva biológica...');
-        const resp = await axios.get('https://jsonplaceholder.typicode.com/posts');
-        return resp.data;
+
+        return this.httpClient.get(
+            'https://jsonplaceholder.typicode.com/posts'
+        );
     }
 
 }
 
 export class PhotosService {
 
+    constructor(private httpClient: HttpClient) {}
+
     async getGallery() {
-        // Otra violación repetida: si mañana axios desaparece, tenemos que buscar todos los archivos que lo usan.
-        const resp = await axios.get('https://jsonplaceholder.typicode.com/photos');
-        return resp.data;
+        console.log('Obteniendo galería de fotos de la reserva biológica...');
+
+        return this.httpClient.get(
+            'https://jsonplaceholder.typicode.com/photos'
+        );
     }
 
 }
